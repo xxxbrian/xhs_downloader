@@ -60,6 +60,7 @@ async fn fetch_media_links(
     })?;
     let image_type = match media_type.as_str() {
         "png" => ImageType::Png,
+        "jpg" => ImageType::Jpg,
         "webp" => ImageType::Webp,
         _ => ImageType::Png,
     };

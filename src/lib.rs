@@ -31,6 +31,7 @@ pub async fn fetch_image_tokens(url: &str) -> Result<Vec<String>, Box<dyn std::e
 
 pub enum ImageType {
     Png,
+    Jpg,
     Webp,
 }
 
@@ -40,6 +41,7 @@ pub fn generate_image_links(tokens: Vec<String>, image_type: ImageType) -> Resul
     for token in tokens {
         let image_link = match image_type {
             ImageType::Png => format!("https://ci.xiaohongshu.com/{}?imageView2/2/w/format/png", token),
+            ImageType::Jpg => format!("https://ci.xiaohongshu.com/{}?imageView2/2/w/format/jpg", token),
             ImageType::Webp => format!("https://sns-img-bd.xhscdn.com/{}", token),
         };
         image_links.push(image_link);
