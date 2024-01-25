@@ -1,14 +1,14 @@
-use tokio;
-use xhs_downloader::{fetch_original_image_url, generate_image_links, ImageType};
 use axum::{
+    extract::Query,
+    http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
-    http::StatusCode,
     Json, Router,
-    extract::Query,
 };
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt};
+use tokio;
+use xhs_downloader::{fetch_original_image_url, generate_image_links, ImageType};
 
 #[tokio::main]
 async fn main() {
@@ -55,33 +55,33 @@ async fn fetch_media_links(
     Query(MediaLinksQuery { url, media_type }): Query<MediaLinksQuery>,
 ) -> Result<Json<Vec<String>>, MediaLinksError> {
     println!("url: {}, media_type: {}", url, media_type);
-    let original_image_urls = fetch_original_image_url(&url).await.map_err(|e| MediaLinksError {
-        message: format!("Error fetching image tokens: {}", e),
-    })?;
+    let original_image_urls =
+        fetch_original_image_url(&url)
+            .await
+            .map_err(|e| MediaLinksError {
+                message: format!("Error fetching image tokens: {}", e),
+            })?;
     let image_type = match media_type.as_str() {
         "png" => ImageType::Png,
         "jpg" => ImageType::Jpg,
         "webp" => ImageType::Webp,
         _ => ImageType::Original,
     };
-    let image_links = generate_image_links(original_image_urls, image_type).map_err(|e| MediaLinksError {
-        message: format!("Error generating image links: {}", e),
-    })?;
+    let image_links =
+        generate_image_links(original_image_urls, image_type).map_err(|e| MediaLinksError {
+            message: format!("Error generating image links: {}", e),
+        })?;
     Ok(Json(image_links))
 }
 
-#[derive(Serialize)]
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct SettingJson {
     username: String,
 }
 
-async fn echo(
-    Json(payload): Json<SettingJson>,
-) -> (StatusCode, Json<SettingJson>) {
+async fn echo(Json(payload): Json<SettingJson>) -> (StatusCode, Json<SettingJson>) {
     (StatusCode::CREATED, Json(payload))
 }
-
 
 // #[tokio::main]
 // async fn main() {
