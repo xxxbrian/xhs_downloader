@@ -8,7 +8,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt};
 use tokio;
-use xhs_downloader::{fetch_original_image_url, generate_image_links, ImageType};
+use xhs_downloader::{fetch_original_image_url, generate_image_links, ImageType, NoteType};
 
 #[tokio::main]
 async fn main() {
@@ -55,18 +55,25 @@ async fn fetch_media_links(
     Query(MediaLinksQuery { url, media_type }): Query<MediaLinksQuery>,
 ) -> Result<Json<Vec<String>>, MediaLinksError> {
     println!("url: {}, media_type: {}", url, media_type);
-    let original_image_urls =
+    let (note_type, original_image_urls) =
         fetch_original_image_url(&url)
             .await
             .map_err(|e| MediaLinksError {
                 message: format!("Error fetching image tokens: {}", e),
             })?;
-    let image_type = match media_type.as_str() {
+    let mut image_type = match media_type.as_str() {
         "png" => ImageType::Png,
         "jpg" => ImageType::Jpg,
         "webp" => ImageType::Webp,
         _ => ImageType::Original,
     };
+    // override image_type if note_type is video
+    match note_type {
+        NoteType::Normal => {}
+        NoteType::Video => {
+            image_type = ImageType::Original;
+        }
+    }
     let image_links =
         generate_image_links(original_image_urls, image_type).map_err(|e| MediaLinksError {
             message: format!("Error generating image links: {}", e),
