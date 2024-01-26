@@ -7,7 +7,7 @@ use downloader::download_and_save;
 use futures::future::join_all;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = parse_args();
     // webapi subcommand
     if let Some(webapi_arg) = matches.subcommand_matches("webapi") {
@@ -16,7 +16,7 @@ async fn main() {
             .map(|s| s.as_str())
             .unwrap_or("0.0.0.0:8000");
         webapi::run(bind).await;
-        return;
+        return Ok(());
     }
     // local download
     let url = matches
@@ -57,5 +57,9 @@ async fn main() {
             let file_path = output;
             return download_and_save(url, file_path).await
         });
-    join_all(futures).await;
+    let results = join_all(futures).await;
+    for result in results {
+        result?;
+    }
+    Ok(())
 }
