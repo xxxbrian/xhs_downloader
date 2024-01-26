@@ -4,6 +4,7 @@ mod cli;
 use cli::parse_args;
 mod downloader;
 use downloader::download_and_save;
+use futures::future::join_all;
 
 #[tokio::main]
 async fn main() {
@@ -46,7 +47,15 @@ async fn main() {
             image_type = ImageType::Original;
         }
     }
-    for link in generate_image_links(original_image_urls, image_type).unwrap() {
-        download_and_save(link.as_str(), output).await.unwrap();
-    }
+
+    // download at the same time
+    let links = generate_image_links(original_image_urls, image_type).unwrap();
+    let futures = links
+        .into_iter()
+        .map(|link| async move{
+            let url = link.as_str();
+            let file_path = output;
+            return download_and_save(url, file_path).await
+        });
+    join_all(futures).await;
 }
